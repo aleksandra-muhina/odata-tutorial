@@ -10,6 +10,7 @@
             height: 100%;
         }
     </style>
+    <!--Initialize the mock server that intercepts all requests-->
     <script
         id="sap-ui-bootstrap"
         src="resources/sap-ui-core.js"
@@ -17,7 +18,9 @@
         data-sap-ui-resourceroots='{
             "tutorial.tutorial": "./"
         }'
-        data-sap-ui-oninit="module:sap/ui/core/ComponentSupport"
+        
+        data-sap-ui-oninit="module:tutorial/tutorial/initMockServer"
+        
         data-sap-ui-compatVersion="edge"
         data-sap-ui-async="true"
         data-sap-ui-frameOptions="trusted"
