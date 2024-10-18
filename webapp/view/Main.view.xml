@@ -2,6 +2,45 @@
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns="sap.m">
     <Page id="page" title="{i18n>title}">
-        <content />
+        <content>
+			<Table
+				id="peopleList"
+				growing="true"
+				growingThreshold="10"
+				items="{
+					path: '/People'
+				}">
+				<columns>
+				    <Column id="userNameColumn">
+						<Text id="userNameLabel" text="{i18n>userNameLabelText}"/>
+				    </Column>
+					<Column id="firstNameColumn">
+						<Text id="firstNameLabel" text="{i18n>firstNameLabelText}"/>
+					</Column>
+					<Column id="lastNameColumn">
+						<Text id="lastNameLabel" text="{i18n>lastNameLabelText}"/>
+					</Column>
+					<Column id="ageColumn">
+						<Text id="ageLabel" text="{i18n>ageLabelText}"/>
+					</Column>
+				</columns>
+				<items>
+					<ColumnListItem id="columnListItem">
+						<cells>
+							<Input id="userNameInput" value="{UserName}"/>
+						</cells>
+						<cells>
+							<Input id="firstNameInput" value="{FirstName}"/>
+						</cells>
+						<cells>
+							<Input id="lastNameInput" value="{LastName}"/>
+						</cells>
+						<cells>
+							<Input id="ageInput" value="{Age}"/>
+						</cells>
+					</ColumnListItem>
+				</items>
+			</Table>
+		</content>
     </Page>
 </mvc:View>
