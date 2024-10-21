@@ -13,7 +13,8 @@
 						$count: true,
 						$$updateGroupId: 'peopleGroup'
 					} 
-				}">
+				}"
+				mode="SingleSelectLeft">
                 <!--Where does "/People" come from? How does it tie to the oData?-->
 				<!--What does $count do? The number of list items was already shown before we added count.-->
 
@@ -33,7 +34,16 @@
 								tooltip="{i18n>createButtonText}"
 								press="onCreate" >
 								<layoutData>
-									<OverflowToolbarLayoutData id="overflowToolbarLayoutData" priority="NeverOverflow"/>
+									<OverflowToolbarLayoutData id="overflowToolbarLayoutDataAdd" priority="NeverOverflow"/>
+								</layoutData>
+							</Button>
+							<Button
+								id="deleteUserButton"
+								icon="sap-icon://delete"
+								tooltip="{i18n>deleteButtonText}"
+								press="onDelete">
+								<layoutData>
+									<OverflowToolbarLayoutData id="overflowToolbarLayoutDataDelete" priority="NeverOverflow"/>
 								</layoutData>
 							</Button>
                             <Button 

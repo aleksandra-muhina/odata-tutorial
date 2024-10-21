@@ -34,7 +34,7 @@ sap.ui.define([
                 let oJSONData = {
                     busy: false,
                     hasUIChanges : false,
-					usernameEmpty : true,
+					usernameEmpty : false,
                     order: 0
                 };
                 this.setModel(new JSONModel(oJSONData), "appView");

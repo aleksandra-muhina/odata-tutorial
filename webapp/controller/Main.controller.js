@@ -47,6 +47,31 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                 }
             });
         },
+
+        onDelete(){
+            let oContext,
+                sUserName;
+
+            const oSelected = this.byId("peopleList").getSelectedItem();
+            //check if an item is selected
+            if(oSelected) {
+                oContext = oSelected.getBindingContext(); //if an item is selected, get the context...
+                sUserName = oContext.getProperty("UserName");
+                oContext.delete().then(() => { //...and delete it (oData delete method)
+                    MessageToast.show(this._getText("deletionSuccessMessage", sUserName)); //promise resolve
+                    //user is deleted upon clicking Save
+                }, 
+                (oError) => {
+                    this._setUIChanges();
+                    if(oError.canceled) {
+                        MessageToast.show(this._getText("deletionRestoredMessage", sUserName)); //promise reject
+                        return; //this results in the user being brought back to the table, upon clicking Cancel
+                    }
+                    MessageBox.error(oError.message + ": " + sUserName);
+                });
+                this._setUIChanges(true); //pending change, save btn is active
+            }
+        },
         //checks input in all fields, extra check for UserName to make sure it's not empty
         onInputChange(oEvent) {
             if(oEvent.getParameter("escPressed")) {
