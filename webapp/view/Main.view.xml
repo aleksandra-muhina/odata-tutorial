@@ -8,19 +8,33 @@
 				growing="true"
 				growingThreshold="10"
 				items="{
-					path: '/People' 
+					path: '/People',
+					parameters: {
+						$count: true
+					} 
 				}">
                 <!--Where does "/People" come from? How does it tie to the oData?-->
+				<!--What does $count do? The number of list items was already shown before we added count.-->
 
                 <headerToolbar>
                     <OverflowToolbar id="overflowToolbar">
                         <content>
                             <ToolbarSpacer id="headerToolbarSpacer"/>
+							<SearchField 
+								id="searchField"
+								width="30%"
+								placeholder="{i18n>searchFieldPlaceholder}"
+								search="onSearch"/>
                             <Button 
                                 id="refreshButton"
                                 icon="sap-icon://refresh"
                                 tooltip="{i18n>refreshButtonText}" 
                                 press="onRefresh" />
+							<Button 
+								id="sortUserButton"
+								icon="sap-icon://sort"
+								tooltip="{i18n>sortButtonText}"
+								press="onSort"/>
                         </content>
                     </OverflowToolbar>
                 </headerToolbar>
