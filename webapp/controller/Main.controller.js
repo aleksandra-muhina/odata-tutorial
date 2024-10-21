@@ -52,7 +52,8 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             let oContext,
                 sUserName;
 
-            const oSelected = this.byId("peopleList").getSelectedItem();
+            const oPeopleList = this.byId("peopleList"),
+            oSelected = oPeopleList.getSelectedItem();
             //check if an item is selected
             if(oSelected) {
                 oContext = oSelected.getBindingContext(); //if an item is selected, get the context...
@@ -62,6 +63,9 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                     //user is deleted upon clicking Save
                 }, 
                 (oError) => {
+                    if(oContext === oPeopleList.getSelectedItem().getBindingContext()){
+                        this._setDetailArea(oContext); //if an item is restored after getting deleted, show it again in the detail area
+                    }
                     this._setUIChanges();
                     if(oError.canceled) {
                         MessageToast.show(this._getText("deletionRestoredMessage", sUserName)); //promise reject
@@ -69,6 +73,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                     }
                     MessageBox.error(oError.message + ": " + sUserName);
                 });
+                this._setDetailArea();
                 this._setUIChanges(true); //pending change, save btn is active
             }
         },
@@ -82,6 +87,10 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                     this.oModel.setProperty("/usernameEmpty", false);
                 }
             }
+        },
+        //retrieve the context of the selected item
+        onSelectionChange(oEvent) {
+            this._setDetailArea(oEvent.getParameter("listItem").getBindingContext());
         },
 
         onSave() {
@@ -217,6 +226,19 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
 
         _setBusy(bIsBusy) {
             this.oModel.setProperty("/busy", bIsBusy);
+        },
+
+        _setDetailArea(oUserContext) {
+            const oDetailArea = this.byId("detailArea"),
+                oLayout = this.byId("defaultLayout"),
+                oSearchField = this.byId("searchField");
+
+            oDetailArea.setBindingContext(oUserContext || null);
+
+            oDetailArea.setVisible(!!oUserContext); //turn to boolean to set visibility
+            oLayout.setSize(oUserContext ? "60%" : "100%");
+            oLayout.setResizable(!!oUserContext); //make the detail view resizable
+            oSearchField.setWidth(oUserContext ? "40%" : "30%");
         }
     });
 });

@@ -1,6 +1,10 @@
 <mvc:View controllerName="tutorial.tutorial.controller.Main"
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
-    xmlns="sap.m">
+    xmlns="sap.m"
+	xmlns:l="sap.ui.layout"
+	xmlns:semantic="sap.f.semantic"
+	xmlns:f="sap.ui.layout.form"
+	xmlns:core="sap.ui.core">
     <Page id="page" title="{i18n>title}">
 		<headerContent>
 			<Button
@@ -11,108 +15,238 @@
 				type="Emphasized"/>
 		</headerContent>
         <content>
-			<Table
-				id="peopleList"
-				growing="true"
-				growingThreshold="10"
-				items="{
-					path: '/People',
-					parameters: {
-						$count: true,
-						$$updateGroupId: 'peopleGroup'
-					} 
-				}"
-				mode="SingleSelectLeft">
-                <!--Where does "/People" come from? How does it tie to the oData?-->
-				<!--What does $count do? The number of list items was already shown before we added count.-->
-
-                <headerToolbar>
-                    <OverflowToolbar id="overflowToolbar">
-                        <content>
-                            <ToolbarSpacer id="headerToolbarSpacer"/>
-							<SearchField 
-								id="searchField"
-								width="30%"
-								placeholder="{i18n>searchFieldPlaceholder}"
-								enabled="{= !${appView>/hasUIChanges}}"
-								search="onSearch"/>
-							<Button 
-								id="addUserButon"
-								icon="sap-icon://add"
-								tooltip="{i18n>createButtonText}"
-								press="onCreate" >
-								<layoutData>
-									<OverflowToolbarLayoutData id="overflowToolbarLayoutDataAdd" priority="NeverOverflow"/>
-								</layoutData>
-							</Button>
-							<Button
-								id="deleteUserButton"
-								icon="sap-icon://delete"
-								tooltip="{i18n>deleteButtonText}"
-								press="onDelete">
-								<layoutData>
-									<OverflowToolbarLayoutData id="overflowToolbarLayoutDataDelete" priority="NeverOverflow"/>
-								</layoutData>
-							</Button>
-                            <Button 
-                                id="refreshButton"
-                                icon="sap-icon://refresh"
-                                tooltip="{i18n>refreshButtonText}" 
-                                press="onRefresh" />
-							<Button 
-								id="sortUserButton"
-								icon="sap-icon://sort"
-								enabled="{= !${appView>/hasUIChanges}}"
-								tooltip="{i18n>sortButtonText}"
-								press="onSort"/>
-                        </content>
-                    </OverflowToolbar>
-                </headerToolbar>
-				<columns>
-				    <Column id="userNameColumn">
-						<Text id="userNameLabel" text="{i18n>userNameLabelText}"/>
-				    </Column>
-					<Column id="firstNameColumn">
-						<Text id="firstNameLabel" text="{i18n>firstNameLabelText}"/>
-					</Column>
-					<Column id="lastNameColumn">
-						<Text id="lastNameLabel" text="{i18n>lastNameLabelText}"/>
-					</Column>
-					<Column id="ageColumn">
-						<Text id="ageLabel" text="{i18n>ageLabelText}"/>
-					</Column>
-				</columns>
-				<items>
-					<ColumnListItem id="columnListItem">
-						<cells>
-							<Input 
-								id="userNameInput" 
-								value="{UserName}"
-								valueLiveUpdate="true"
-								liveChange="onInputChange"/>
-						</cells>
-						<cells>
-							<Input 
-								id="firstNameInput" 
-								value="{FirstName}" 
-								liveChange="onInputChange"/>
-						</cells>
-						<cells>
-							<Input 
-								id="lastNameInput" 
-								value="{LastName}" 
-								liveChange="onInputChange"/>
-						</cells>
-						<cells>
-							<Input 
-								id="ageInput" 
-								value="{Age}" 
-								valueLiveUpdate="true" 
-								liveChange="onInputChange"/>
-						</cells>
-					</ColumnListItem>
-				</items>
-			</Table>
+			<l:ResponsiveSplitter id="responsiveSplitter" defaultPane="defaultPane">
+				<l:PaneContainer id="defaultPanelContainer" orientation="Horizontal">
+					<l:SplitPane id="defaultPane">
+						<l:layoutData>
+							<l:SplitterLayoutData id="defaultLayout" size="100%" resizable="false"/>
+						</l:layoutData>
+						<Table
+							id="peopleList"
+							growing="true"
+							growingThreshold="10"
+							items="{
+								path: '/People',
+								parameters: {
+									$count: true,
+									$$updateGroupId: 'peopleGroup'
+								} 
+							}"
+							mode="SingleSelectLeft"
+							selectionChange="onSelectionChange">
+							<!--Where does "/People" come from? How does it tie to the oData?-->
+							<!--What does $count do? The number of list items was already shown before we added count.-->
+							<headerToolbar>
+								<OverflowToolbar id="overflowToolbar">
+									<content>
+										<ToolbarSpacer id="headerToolbarSpacer"/>
+										<SearchField 
+											id="searchField"
+											width="30%"
+											placeholder="{i18n>searchFieldPlaceholder}"
+											enabled="{= !${appView>/hasUIChanges}}"
+											search="onSearch"/>
+										<Button 
+											id="addUserButon"
+											icon="sap-icon://add"
+											tooltip="{i18n>createButtonText}"
+											press="onCreate" >
+											<layoutData>
+												<OverflowToolbarLayoutData id="overflowToolbarLayoutDataAdd" priority="NeverOverflow"/>
+											</layoutData>
+										</Button>
+										<Button
+											id="deleteUserButton"
+											icon="sap-icon://delete"
+											tooltip="{i18n>deleteButtonText}"
+											press="onDelete">
+											<layoutData>
+												<OverflowToolbarLayoutData id="overflowToolbarLayoutDataDelete" priority="NeverOverflow"/>
+											</layoutData>
+										</Button>
+										<Button 
+											id="refreshButton"
+											icon="sap-icon://refresh"
+											tooltip="{i18n>refreshButtonText}" 
+											press="onRefresh" />
+										<Button 
+											id="sortUserButton"
+											icon="sap-icon://sort"
+											enabled="{= !${appView>/hasUIChanges}}"
+											tooltip="{i18n>sortButtonText}"
+											press="onSort"/>
+									</content>
+								</OverflowToolbar>
+							</headerToolbar>
+							<columns>
+								<Column id="userNameColumn">
+									<Text id="userNameLabel" text="{i18n>userNameLabelText}"/>
+								</Column>
+								<Column id="firstNameColumn">
+									<Text id="firstNameLabel" text="{i18n>firstNameLabelText}"/>
+								</Column>
+								<Column id="lastNameColumn">
+									<Text id="lastNameLabel" text="{i18n>lastNameLabelText}"/>
+								</Column>
+								<Column id="ageColumn">
+									<Text id="ageLabel" text="{i18n>ageLabelText}"/>
+								</Column>
+							</columns>
+							<items>
+								<ColumnListItem id="columnListItem">
+									<cells>
+										<Input 
+											id="userNameInput" 
+											value="{UserName}"
+											valueLiveUpdate="true"
+											liveChange="onInputChange"/>
+									</cells>
+									<cells>
+										<Input 
+											id="firstNameInput" 
+											value="{FirstName}" 
+											liveChange="onInputChange"/>
+									</cells>
+									<cells>
+										<Input 
+											id="lastNameInput" 
+											value="{LastName}" 
+											liveChange="onInputChange"/>
+									</cells>
+									<cells>
+										<Input 
+											id="ageInput" 
+											value="{Age}" 
+											valueLiveUpdate="true" 
+											liveChange="onInputChange"/>
+									</cells>
+								</ColumnListItem>
+							</items>
+						</Table>
+					</l:SplitPane>
+					<l:SplitPane id="detailPane">
+						<semantic:SemanticPage
+							id="detailArea"
+							visible="false">
+							<semantic:titleHeading>
+								<Title
+									id="detailsTitle"
+									text="{FirstName} {LastName}"
+									level="H2"/>
+							</semantic:titleHeading>
+							<semantic:headerContent>
+								<FlexBox id="detailFlexBox">
+									<VBox id="vboxUserName">
+										<ObjectAttribute id="detailsUserNameLabel" text="{i18n>userNameLabelText}"/>
+										<ObjectAttribute id="detailsUserName" text="{UserName}"/>
+									</VBox>
+									<VBox id="vboxAge" class="sapUiMediumMarginBegin">
+										<ObjectAttribute id="detailsAgeLabel" text="{i18n>ageLabelText}"/>
+										<ObjectNumber id="detailsAge" number="{Age}" unit="Years"/>
+									</VBox>
+								</FlexBox>
+							</semantic:headerContent>
+							<semantic:content>
+								<VBox id="vboxDetailsContent">
+									<FlexBox id="flexboxWrap" wrap="Wrap">
+										<f:Form	id="detailsUserForm" editable="false" class="sapUiTinyMargin">
+											<f:title>
+												<core:Title id="detailsFormTitle" text="{i18n>addressTitleText}" />
+											</f:title>
+											<f:layout>
+												<f:ResponsiveGridLayout
+													id="responsiveGridLayout"
+													labelSpanXL="3"
+													labelSpanL="3"
+													labelSpanM="3"
+													labelSpanS="12"
+													adjustLabelSpan="false"
+													emptySpanXL="4"
+													emptySpanL="4"
+													emptySpanM="4"
+													emptySpanS="0"
+													columnsXL="1"
+													columnsL="1"
+													columnsM="1"
+													singleContainerFullSize="false" />
+											</f:layout>
+											<f:formContainers>
+												<f:FormContainer id="formContainerUserDetails">
+													<f:formElements>
+														<f:FormElement id="detailsAddressLabel" label="{i18n>addressLabelText}">
+															<f:fields>
+																<Text id="detailsAddress" text="{HomeAddress/Address}" />
+															</f:fields>
+														</f:FormElement>
+														<f:FormElement id="detailsCityLabel" label="{i18n>cityLabelText}">
+															<f:fields>
+																<Text id="detailsCity" text="{HomeAddress/City/Name}" />
+															</f:fields>
+														</f:FormElement>
+														<f:FormElement id="detailsRegionLabel" label="{i18n>regionLabelText}">
+															<f:fields>
+																<Text id="detailsRegion" text="{HomeAddress/City/Region}" />
+															</f:fields>
+														</f:FormElement>
+														<f:FormElement id="detailsCountryLabel" label="{i18n>countryLabelText}">
+															<f:fields>
+																<Text id="detailsCountry" text="{HomeAddress/City/CountryRegion}" />
+															</f:fields>
+														</f:FormElement>
+													</f:formElements>
+												</f:FormContainer>
+											</f:formContainers>
+										</f:Form>
+										<f:Form	id="detailsBestFriendForm" editable="false" class="sapUiTinyMargin">
+											<f:title>
+												<core:Title id="detailsFormBestFriendTitle" text="{i18n>bestFriendTitleText}" />
+											</f:title>
+											<f:layout>
+												<f:ResponsiveGridLayout
+													id="responsiveGridLayoutBF"
+													labelSpanXL="3"
+													labelSpanL="3"
+													labelSpanM="3"
+													labelSpanS="12"
+													adjustLabelSpan="false"
+													emptySpanXL="4"
+													emptySpanL="4"
+													emptySpanM="4"
+													emptySpanS="0"
+													columnsXL="1"
+													columnsL="1"
+													columnsM="1"
+													singleContainerFullSize="false" />
+											</f:layout>
+											<f:formContainers>
+												<f:FormContainer id="formContainerBestFriend">
+													<f:formElements>
+														<f:FormElement id="bestFriendNameLabel" label="{i18n>nameLabelText}">
+															<f:fields>
+																<Text id="bestFriendName" text="{BestFriend/FirstName} {BestFriend/LastName}" />
+															</f:fields>
+														</f:FormElement>
+														<f:FormElement id="bestFriendAgeLabel" label="{i18n>ageLabelText}">
+															<f:fields>
+																<Text id="bestFriendAge" text="{BestFriend/Age}" />
+															</f:fields>
+														</f:FormElement>
+														<f:FormElement id="bestFriendUserNameLabel" label="{i18n>userNameLabelText}">
+															<f:fields>
+																<Text id="bestFriendUserName" text="{BestFriend/UserName}" />
+															</f:fields>
+														</f:FormElement>
+													</f:formElements>
+												</f:FormContainer>
+											</f:formContainers>
+										</f:Form>
+									</FlexBox>
+								</VBox>
+							</semantic:content>
+						</semantic:SemanticPage>
+					</l:SplitPane>
+				</l:PaneContainer>
+			</l:ResponsiveSplitter>
 		</content>
 		<footer>
 			<Toolbar id="footerToolbar" visible="{appView>/hasUIChanges}" >
