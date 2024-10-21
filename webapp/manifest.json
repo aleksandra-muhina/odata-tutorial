@@ -68,7 +68,8 @@
 				"settings": {
 					"autoExpandSelect": true,
 					"earlyRequests": true,
-					"operationMode": "Server"
+					"operationMode": "Server",
+          "groupId": "$auto"
 			  }
       }
     },

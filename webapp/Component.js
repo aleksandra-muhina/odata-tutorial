@@ -5,9 +5,10 @@
 sap.ui.define([
         "sap/ui/core/UIComponent",
         "sap/ui/Device",
-        "tutorial/tutorial/model/models"
+        "tutorial/tutorial/model/models",
+        "sap/ui/model/json/JSONModel"
     ],
-    function (UIComponent, Device, models) {
+    function (UIComponent, Device, models, JSONModel) {
         "use strict";
 
         return UIComponent.extend("tutorial.tutorial.Component", {
@@ -29,6 +30,14 @@ sap.ui.define([
 
                 // set the device model
                 this.setModel(models.createDeviceModel(), "device");
+                // set the json model
+                let oJSONData = {
+                    busy: false,
+                    hasUIChanges : false,
+					usernameEmpty : true,
+                    order: 0
+                };
+                this.setModel(new JSONModel(oJSONData), "appView");
             }
         });
     }

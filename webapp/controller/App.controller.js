@@ -7,6 +7,7 @@ sap.ui.define(
   
       return BaseController.extend("tutorial.tutorial.controller.App", {
         onInit: function() {
+          this.oModel = this.getOwnerComponent().getModel("appView");
         }
       });
     }

@@ -6,18 +6,82 @@ sap.ui.define([
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
 	"sap/ui/model/FilterType",
+    "sap/ui/model/message/MessageModel",
     "sap/ui/model/json/JSONModel"
 ],
-function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, FilterType, JSONModel) {
+function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, FilterType, MessageModel, JSONModel) {
     "use strict";
 
     return Controller.extend("tutorial.tutorial.controller.Main", {
         onInit() {
-            let oJSONData = {
-                order: 0
+            this.oModel = this.getOwnerComponent().getModel("appView");
+            this.oMessageModel = new MessageModel(); //reference the message model directly, diff from tutorial
+            const oMessageModelBinding = this.oMessageModel.bindList("/", undefined, [], 
+                new Filter("technical", FilterOperator.EQ, true)
+            );
+            //.bindList("sPath", default context, no sorters, filter for only technical messages)
+            // default context means it uses the whole model instead of a part of it
+            this.getView().setModel(this.oMessageModel, "message");
+            oMessageModelBinding.attachChange(this.onMessageBindingChange, this); //add listener
+            this._bTechnicalErrors = false;
+        },
+        //event handler of Add User button
+        onCreate(){
+            const oList = this.byId("peopleList");
+            const oBinding = oList.getBinding("items");
+            const oContext = oBinding.create({ //oDataListBinding#create, creates a new entity in the list, returns the binding context of the new user
+                "UserName" : "",
+                "FirstName" : "",
+                "LastName" : "",
+                "Age" : "18" //this all adds initial data
+            });
+
+            this._setUIChanges(); //sets hasUIChanges to true, because there are pending changes
+            this.oModel.setProperty("/usernameEmpty", true);
+
+            oList.getItems().some(oItem => {
+                if(oItem.getBindingContext() === oContext) { //using the returned context, we select and focus the row where the data can be entered
+                    oItem.focus();
+                    oItem.setSelected(true);
+                    return true;
+                }
+            });
+        },
+        //checks input in all fields, extra check for UserName to make sure it's not empty
+        onInputChange(oEvent) {
+            if(oEvent.getParameter("escPressed")) {
+                this._setUIChanges();
+            } else {
+                this._setUIChanges(true);
+                if(oEvent.getSource().getParent().getBindingContext().getProperty("UserName")) {
+                    this.oModel.setProperty("/usernameEmpty", false);
+                }
+            }
+        },
+
+        onSave() {
+            const fnSuccess = () => {
+                this._setBusy(false); //release the ui
+                MessageToast.show(this._getText("changesSentMessage"));
+                this._setUIChanges(false); //no more pending changes
             };
-            const oModel = new JSONModel(oJSONData);
-            this.getView().setModel(oModel, "appView");
+
+            const fnError = oError => {
+                this._setBusy(false);
+                this._setUIChanges(false);
+                MessageBox.error(oError.message); //displays an error dialog with the error.message from the promise
+            };
+
+            //this._setBusy(true); //locks the ui until the submitBatch is resolved
+            this.getView().getModel().submitBatch("peopleGroup").then(fnSuccess, fnError); //submitBatch is an oDataModel method, which returns a promise
+            this._bTechnicalErrors = false; //resetting technical errors on a new save
+
+        },
+        //discard pending changes
+        onResetChanges() {
+            this.byId("peopleList").getBinding("items").resetChanges();
+            this._bTechnicalErrors = false;
+            this._setUIChanges(); //check for pending changes, enable the header, hide the footer
         },
 
         onRefresh() {
@@ -31,12 +95,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             }
             oBinding.refresh();
             MessageToast.show(this._getText("refreshSuccessMessage"));
-        }, 
-
-        //Get messages from the i18n model
-        _getText(sTextId, aArgs) {
-            return this.getOwnerComponent().getModel("i18n").getResourceBundle().getText(sTextId, aArgs);
-        }, 
+        },  
 
         //The search is case sensitive and searches only in the currently loaded names
         onSearch() {
@@ -54,13 +113,13 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             const oView = this.getView(),
             aStates = [undefined, "asc", "desc"],
             aStateTextIds = ["sortNone", "sortAscending", "sortDescending"]; //this leads to i18n messages
-            let iOrder = oView.getModel("appView").getProperty("/order");
+            let iOrder = this.oModel.getProperty("/order");
             let sMessage;
 
             iOrder = (iOrder + 1) % aStates.length; //cycles through 0, 1 and 2 on every click
             const sOrder = aStates[iOrder]; //cycles through the states on every click
 
-            oView.getModel("appView").setProperty("/order", iOrder); //preserves the current number between clicks
+            this.oModel.setProperty("/order", iOrder); //preserves the current number between clicks
             oView.byId("peopleList").getBinding("items").sort(sOrder && new Sorter("LastName", sOrder === "desc"));
             //If sOrder is truthy, new Sorter is created, which sorts by LastName and determines the order (if sOrder === "desc" returns true or false)
 
@@ -68,6 +127,57 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             MessageToast.show(sMessage);
 
             //all in all, the sorter cycles between unsorted, (sorted by last name, ascending) and (sorted by last name, descending) each time it's clicked
+        },
+
+        onMessageBindingChange(oEvent) {
+            const aContext = oEvent.getSource().getContexts(); //only technical messages should have binding context, because of the filter
+            let aMessages,
+                bMessageOpen = false;
+            console.log("onMessageBindingChange runs");
+            if(bMessageOpen || !aContext.length) { //do not open a dialog, if there is a dialog already present or if there are no technical messages
+                return;
+            }
+
+            //extract the technical messages
+            aMessages = aContext.map(oContext => { //map all messages in an array
+                return oContext.getObject();
+            });
+            this.oMessageModel.setProperty("/", []);
+            this.getView().setModel(this.oMessageModel, "message");
+
+            this._setUIChanges(true); //pending changes are true, still have the option to save or discard
+            this._bTechnicalErrors = true; //indicates that technical errors are present
+            MessageBox.error(aMessages[0].message, { //get the first technical error and display it as a message
+                id: "serviceErrorMessageBox",
+                onClose: () => {
+                    bMessageOpen = false; //message closes and allows new messages
+                }
+            });
+            
+            //clear messages from the model
+            this.oMessageModel.setProperty("/", []);
+            this.getView().setModel(this.oMessageModel, "message");
+            bMessageOpen = true;
+        },
+
+        //Get messages from the i18n model
+        _getText(sTextId, aArgs) {
+            return this.getOwnerComponent().getModel("i18n").getResourceBundle().getText(sTextId, aArgs);
+        },
+        //check of there are unsaved/unapplied changes
+        _setUIChanges(bHasUIChanges) {
+            if(this._bTechnicalErrors) {
+                //if there is a technical error, we set this to true
+                bHasUIChanges = true;
+            } else if(bHasUIChanges === undefined){
+                bHasUIChanges = this.getView().getModel().hasPendingChanges(); //this is an oData boolean check
+            }
+            console.log("bHasUIChanges" + bHasUIChanges);
+            this.oModel.setProperty("/hasUIChanges", bHasUIChanges); 
+        },
+
+        _setBusy(bIsBusy) {
+            this.oModel.setProperty("/busy", bIsBusy);
         }
     });
 });

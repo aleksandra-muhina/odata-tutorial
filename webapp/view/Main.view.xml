@@ -10,7 +10,8 @@
 				items="{
 					path: '/People',
 					parameters: {
-						$count: true
+						$count: true,
+						$$updateGroupId: 'peopleGroup'
 					} 
 				}">
                 <!--Where does "/People" come from? How does it tie to the oData?-->
@@ -24,7 +25,17 @@
 								id="searchField"
 								width="30%"
 								placeholder="{i18n>searchFieldPlaceholder}"
+								enabled="{= !${appView>/hasUIChanges}}"
 								search="onSearch"/>
+							<Button 
+								id="addUserButon"
+								icon="sap-icon://add"
+								tooltip="{i18n>createButtonText}"
+								press="onCreate" >
+								<layoutData>
+									<OverflowToolbarLayoutData id="overflowToolbarLayoutData" priority="NeverOverflow"/>
+								</layoutData>
+							</Button>
                             <Button 
                                 id="refreshButton"
                                 icon="sap-icon://refresh"
@@ -33,6 +44,7 @@
 							<Button 
 								id="sortUserButton"
 								icon="sap-icon://sort"
+								enabled="{= !${appView>/hasUIChanges}}"
 								tooltip="{i18n>sortButtonText}"
 								press="onSort"/>
                         </content>
@@ -55,20 +67,49 @@
 				<items>
 					<ColumnListItem id="columnListItem">
 						<cells>
-							<Input id="userNameInput" value="{UserName}"/>
+							<Input 
+								id="userNameInput" 
+								value="{UserName}"
+								valueLiveUpdate="true"
+								liveChange="onInputChange"/>
 						</cells>
 						<cells>
-							<Input id="firstNameInput" value="{FirstName}"/>
+							<Input 
+								id="firstNameInput" 
+								value="{FirstName}" 
+								liveChange="onInputChange"/>
 						</cells>
 						<cells>
-							<Input id="lastNameInput" value="{LastName}"/>
+							<Input 
+								id="lastNameInput" 
+								value="{LastName}" 
+								liveChange="onInputChange"/>
 						</cells>
 						<cells>
-							<Input id="ageInput" value="{Age}"/>
+							<Input 
+								id="ageInput" 
+								value="{Age}" 
+								valueLiveUpdate="true" 
+								liveChange="onInputChange"/>
 						</cells>
 					</ColumnListItem>
 				</items>
 			</Table>
 		</content>
+		<footer>
+			<Toolbar id="footerToolbar" visible="{appView>/hasUIChanges}" >
+				<ToolbarSpacer id="footerToolbarSpacer"/>
+				<Button 
+					id="saveButton"
+					type="Emphasized"
+					text="{i18n>saveButtonText}"
+					enabled="{= ${appView>/usernameEmpty} === false}"
+					press="onSave" />
+				<Button 
+					id="doneButton" 
+					text="{i18n>cancelButtonText}"
+					press="onResetChanges"/>
+			</Toolbar>
+		</footer>
     </Page>
 </mvc:View>
