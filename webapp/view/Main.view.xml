@@ -2,6 +2,14 @@
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns="sap.m">
     <Page id="page" title="{i18n>title}">
+		<headerContent>
+			<Button
+				id="resetChangesButton"
+				text="{i18n>resetChangesButtonText}"
+				enabled="{= !${appView>hasUIChanges}}"
+				press="onResetDataSource"
+				type="Emphasized"/>
+		</headerContent>
         <content>
 			<Table
 				id="peopleList"

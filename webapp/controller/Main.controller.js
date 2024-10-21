@@ -108,6 +108,20 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             this._bTechnicalErrors = false;
             this._setUIChanges(); //check for pending changes, enable the header, hide the footer
         },
+        //revert all changes even if they were saved 
+        //currently only works on the second click, but there doesn't seem to be an error, so why?
+        onResetDataSource() {
+            const oDataModel = this.getView().getModel();
+            let oOperation = oDataModel.bindContext("/ResetDataSource(...)"); //deferred operation
+            //the deferred operation is invoked at a later time... but why?
+            oOperation.invoke().then(() => {
+                oDataModel.refresh();
+                MessageToast.show(this._getText("sourceResetSuccessMessage"));
+            },
+            (oError) => {
+                MessageBox.error(oError.message);
+            });
+        },
 
         onRefresh() {
             const oBinding = this.byId("peopleList").getBinding("items");
