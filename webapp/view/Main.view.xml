@@ -241,6 +241,55 @@
 											</f:formContainers>
 										</f:Form>
 									</FlexBox>
+									<Table
+										id="friendsTable"
+										width="auto"
+										items="{path: 'Friends',
+												parameters: {
+													$$ownRequest: true
+												}}"
+										noDataText="{i18n>noData}"
+										class="sapUiSmallMarginBottom">
+										<headerToolbar>
+											<Toolbar id="friendsTableToolbar">
+												<Title
+													id="friendsTableTitle"
+													text="{i18n>friendsTitle}"
+													titleStyle="H4"
+													level="H4"/>
+											</Toolbar>
+										</headerToolbar>
+										<columns>
+											<Column id="friendsTableUsernameColumn">
+												<Text id="friendsTableUsernameTitle" text="{i18n>userNameLabelText}"/>
+											</Column>
+											<Column id="friendsTableFirstNameColumn">
+												<Text id="friendsTableFirstNameeTitle" text="{i18n>firstNameLabelText}"/>
+											</Column>
+											<Column id="friendsTableLastNameColumn">
+												<Text id="friendsTableLastNameTitle" text="{i18n>lastNameLabelText}"/>
+											</Column>
+											<Column id="friendsTableAgeColumn">
+												<Text id="friendsTableAgeTitle" text="{i18n>ageLabelText}"/>
+											</Column>
+										</columns>
+										<items>
+											<ColumnListItem id="friendsTableColumnListItem">
+												<cells>
+													<Text id="friendsTableUserName" text="{UserName}"/>
+												</cells>
+												<cells>
+													<Text id="friendsTableFirstName" text="{FirstName}"/>
+												</cells>
+												<cells>
+													<Text id="friendsTableLastName" text="{LastName}"/>
+												</cells>
+												<cells>
+													<Text id="friendsTableAge" text="{Age}"/>
+												</cells>
+											</ColumnListItem>
+										</items>
+									</Table>
 								</VBox>
 							</semantic:content>
 						</semantic:SemanticPage>
