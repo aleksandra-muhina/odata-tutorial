@@ -15,14 +15,14 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
     return Controller.extend("tutorial.tutorial.controller.Main", {
         onInit() {
             this.oModel = this.getOwnerComponent().getModel("appView");
-            this.oMessageModel = new MessageModel(); //reference the message model directly, diff from tutorial
-            const oMessageModelBinding = this.oMessageModel.bindList("/", undefined, [], 
-                new Filter("technical", FilterOperator.EQ, true)
-            );
+            //this.oMessageModel = new MessageModel(); //reference the message model directly, diff from tutorial
+            //const oMessageModelBinding = this.oMessageModel.bindList("/", undefined, [], 
+            //    new Filter("technical", FilterOperator.EQ, true)
+            //);
             //.bindList("sPath", default context, no sorters, filter for only technical messages)
             // default context means it uses the whole model instead of a part of it
-            this.getView().setModel(this.oMessageModel, "message");
-            oMessageModelBinding.attachChange(this.onMessageBindingChange, this); //add listener
+            //this.getView().setModel(this.oMessageModel, "message");
+            //oMessageModelBinding.attachChange(this.onMessageBindingChange, this); //add listener
             this._bTechnicalErrors = false;
         },
         //event handler of Add User button
@@ -88,9 +88,10 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                 }
             }
         },
-        //retrieve the context of the selected item
+        //retrieve the context of the selected item and pass it to _setDetailArea
         onSelectionChange(oEvent) {
             this._setDetailArea(oEvent.getParameter("listItem").getBindingContext());
+            
         },
 
         onSave() {
@@ -119,10 +120,11 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
         },
         //revert all changes even if they were saved 
         //currently only works on the second click, but there doesn't seem to be an error, so why?
+        //maybe this is intended, the tutorial said it only resets the data, so the refresh button needs to be used to visualize the data
         onResetDataSource() {
             const oDataModel = this.getView().getModel();
-            let oOperation = oDataModel.bindContext("/ResetDataSource(...)"); //deferred operation
-            //the deferred operation is invoked at a later time... but why?
+            let oOperation = oDataModel.bindContext("/ResetDataSource(...)"); //deferred operation, the (...) marks it as deferred
+
             oOperation.invoke().then(() => {
                 oDataModel.refresh();
                 MessageToast.show(this._getText("sourceResetSuccessMessage"));
@@ -177,7 +179,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             //all in all, the sorter cycles between unsorted, (sorted by last name, ascending) and (sorted by last name, descending) each time it's clicked
         },
 
-        onMessageBindingChange(oEvent) {
+        /*onMessageBindingChange(oEvent) {
             const aContext = oEvent.getSource().getContexts(); //only technical messages should have binding context, because of the filter
             let aMessages,
                 bMessageOpen = false;
@@ -206,7 +208,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             this.oMessageModel.setProperty("/", []);
             this.getView().setModel(this.oMessageModel, "message");
             bMessageOpen = true;
-        },
+        },*/
 
         //Get messages from the i18n model
         _getText(sTextId, aArgs) {
@@ -220,20 +222,35 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             } else if(bHasUIChanges === undefined){
                 bHasUIChanges = this.getView().getModel().hasPendingChanges(); //this is an oData boolean check
             }
-            console.log("bHasUIChanges" + bHasUIChanges);
             this.oModel.setProperty("/hasUIChanges", bHasUIChanges); 
         },
 
-        _setBusy(bIsBusy) {
+        _setBusy(bIsBusy) { //sets the App View to busy
             this.oModel.setProperty("/busy", bIsBusy);
         },
-
+        //set Detail view
         _setDetailArea(oUserContext) {
             const oDetailArea = this.byId("detailArea"),
                 oLayout = this.byId("defaultLayout"),
                 oSearchField = this.byId("searchField");
 
-            oDetailArea.setBindingContext(oUserContext || null);
+            let oOldContext;
+
+            if(!oDetailArea) {
+                return; //check if there is a detail view and return if there is none
+            }
+
+            oOldContext = oDetailArea.getBindingContext(); //get the current/about-to-be-old context
+            if(oOldContext) {
+                oOldContext.setKeepAlive(false); //removes old context
+            }
+            if(oUserContext) { //saves the new context and keeps it until it becomes old context
+                oUserContext.setKeepAlive(true,
+                    this._setDetailArea.bind(this) //.bind(this) makes sure that when this._setDetailArea is called from here, "this" still refers to the controller
+                ); 
+            }
+
+            oDetailArea.setBindingContext(oUserContext || null); 
 
             oDetailArea.setVisible(!!oUserContext); //turn to boolean to set visibility
             oLayout.setSize(oUserContext ? "60%" : "100%");
