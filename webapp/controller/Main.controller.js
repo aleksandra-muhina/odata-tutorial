@@ -27,28 +27,67 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             this._bTechnicalErrors = false;
 
             this.oDataModel = this.getOwnerComponent().getModel();
+            this.oData = this.getOwnerComponent().getModel("jsonData");
+            this.loadData();
+
+        },
+        loadData() {
+            this.oDataModel.bindList("/People").requestContexts() //bind the list and fetch the items (contexts)
+                .then(
+                    (aContexts) => {
+                        let aData = aContexts.map(oContext => {
+                            return oContext.getObject();
+                             //get each person as an object in an array
+                        });
+                        this.oData.setData(aData); //put the array in the jsonData model
+                    },
+                    (oError) => {
+                        console.log(oError.message);
+                        MessageBox.error(oError.message);
+                    }
+                );
         },
         //event handler of Add User button
         onCreate(){
             const oList = this.byId("peopleList");
-            const oBinding = oList.getBinding("items");
-            const oContext = oBinding.create({ //oDataListBinding#create, creates a new entity in the list, returns the binding context of the new user
+            let aItems, oNewItem;
+            //const oBinding = oList.getBinding("items");
+            let aData = this.oData.getData();
+
+            const oNewEntry = {
+                UserName : "",
+                FirstName : "",
+                LastName : "",
+                Age : "18"
+            };
+
+            aData.unshift(oNewEntry);
+            this.oData.setData(aData);
+            this.oData.refresh(true);
+            
+            aItems = oList.getItems();
+            oNewItem = aItems[0];
+
+            /*const oContext = oBinding.create({ //oDataListBinding#create, creates a new entity in the list, returns the binding context of the new user
                 "UserName" : "",
                 "FirstName" : "",
                 "LastName" : "",
                 "Age" : "18" //this all adds initial data
-            });
-
-            this._setUIChanges(); //sets hasUIChanges to true, because there are pending changes
-            this.oModel.setProperty("/usernameEmpty", true);
-
-            oList.getItems().some(oItem => {
-                if(oItem.getBindingContext() === oContext) { //using the returned context, we select and focus the row where the data can be entered
+            });*/
+           /*aItems.some(oItem => {
+                if(oItem.getBindingContext() === oNewItem) { //using the returned context, we select and focus the row where the data can be entered
                     oItem.focus();
                     oItem.setSelected(true);
                     return true;
                 }
-            });
+            });*/
+            if (oNewItem) {
+                oNewItem.setSelected(true);
+                oNewItem.focus();
+            }
+
+            this._setUIChanges(true); //sets hasUIChanges to true, because there are pending changes
+            this.oModel.setProperty("/usernameEmpty", true);
         },
 
         onDelete(){
@@ -86,7 +125,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                 this._setUIChanges();
             } else {
                 this._setUIChanges(true);
-                if(oEvent.getSource().getParent().getBindingContext().getProperty("UserName")) {
+                if(oEvent.getSource().getParent().getBindingContext("jsonData").getObject().UserName) { //bound getBindingContext("jsonData") to the model, check the object's username
                     this.oModel.setProperty("/usernameEmpty", false);
                 }
             }

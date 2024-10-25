@@ -25,13 +25,7 @@
 							id="peopleList"
 							growing="true"
 							growingThreshold="10"
-							items="{
-								path: '/People',
-								parameters: {
-									$count: true,
-									$$updateGroupId: 'peopleGroup'
-								}
-							}"
+							items="{jsonData>/}"
 							mode="SingleSelectLeft"
 							selectionChange="onSelectionChange">
 							<headerToolbar>
@@ -101,26 +95,26 @@
 									<cells>
 										<Input 
 											id="userNameInput" 
-											value="{UserName}"
+											value="{jsonData>UserName}"
 											valueLiveUpdate="true"
 											liveChange="onInputChange"/>
 									</cells>
 									<cells>
 										<Input 
 											id="firstNameInput" 
-											value="{FirstName}" 
+											value="{jsonData>FirstName}" 
 											liveChange="onInputChange"/>
 									</cells>
 									<cells>
 										<Input 
 											id="lastNameInput" 
-											value="{LastName}" 
+											value="{jsonData>LastName}" 
 											liveChange="onInputChange"/>
 									</cells>
 									<cells>
 										<Input 
 											id="ageInput" 
-											value="{Age}" 
+											value="{jsonData>Age}" 
 											valueLiveUpdate="true" 
 											liveChange="onInputChange"/>
 									</cells>
@@ -128,7 +122,7 @@
 										<Input 
 											id="genderInput" 
 											value="{
-												path: 'Gender',
+												path: 'jsonData>Gender',
 												targetType: 'any'
 											}" 
 											valueLiveUpdate="true" 
@@ -139,7 +133,7 @@
 										<Input 
 											id="featureInput" 
 											value="{
-												path: 'FavoriteFeature',
+												path: 'jsonData>FavoriteFeature',
 												targetType: 'any'
 											}" 
 											valueLiveUpdate="true" 

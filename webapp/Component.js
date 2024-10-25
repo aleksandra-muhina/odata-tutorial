@@ -43,11 +43,13 @@ sap.ui.define([
                 this.setModel(new ODataModel({
                     serviceUrl: "odata/TripPinRESTierService/(S(id))/",
                     odataVersion: "4.0",
-                    autoExpandSelect: true,
-                    earlyRequests: true,
-                    operationMode: "Server",
+                    // autoExpandSelect: true, //adds Expand and Select to requests, allows to only fetch necessary data, and also messes with the proxy for some reason
+                    earlyRequests: true, //fetches data as early as possible, reducing load time 
+                    operationMode: "Server", // conducts filtering and sorting on the server side 
                     groupId: "$auto"
                 }));
+                 
+                this.setModel(new JSONModel(), "jsonData");
             }
         });
     }
