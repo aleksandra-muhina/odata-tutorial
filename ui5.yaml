@@ -26,3 +26,8 @@ server:
       configuration:
         component: tutorial.tutorial
         ui5Theme: sap_horizon
+    - name: ui5-middleware-simpleproxy
+      afterMiddleware: compression
+      mountPath: /odata
+      configuration:
+        baseUri: "https://services.odata.org"

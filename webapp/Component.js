@@ -6,9 +6,10 @@ sap.ui.define([
         "sap/ui/core/UIComponent",
         "sap/ui/Device",
         "tutorial/tutorial/model/models",
-        "sap/ui/model/json/JSONModel"
+        "sap/ui/model/json/JSONModel",
+        "sap/ui/model/odata/v4/ODataModel"
     ],
-    function (UIComponent, Device, models, JSONModel) {
+    function (UIComponent, Device, models, JSONModel, ODataModel) {
         "use strict";
 
         return UIComponent.extend("tutorial.tutorial.Component", {
@@ -38,6 +39,15 @@ sap.ui.define([
                     order: 0
                 };
                 this.setModel(new JSONModel(oJSONData), "appView");
+
+                this.setModel(new ODataModel({
+                    serviceUrl: "odata/TripPinRESTierService/(S(id))/",
+                    odataVersion: "4.0",
+                    autoExpandSelect: true,
+                    earlyRequests: true,
+                    operationMode: "Server",
+                    groupId: "$auto"
+                }));
             }
         });
     }

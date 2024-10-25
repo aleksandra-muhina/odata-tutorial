@@ -15,15 +15,18 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
     return Controller.extend("tutorial.tutorial.controller.Main", {
         onInit() {
             this.oModel = this.getOwnerComponent().getModel("appView");
-            //this.oMessageModel = new MessageModel(); //reference the message model directly, diff from tutorial
-            //const oMessageModelBinding = this.oMessageModel.bindList("/", undefined, [], 
-            //    new Filter("technical", FilterOperator.EQ, true)
-            //);
+            const oMessageManager = sap.ui.getCore().getMessageManager();
+            this.oMessageModel = oMessageManager.getMessageModel(); //get message manager and the model through it
+            let oMessageModelBinding = this.oMessageModel.bindList("/", undefined, [], 
+                new Filter("technical", FilterOperator.EQ, true)
+            );
             //.bindList("sPath", default context, no sorters, filter for only technical messages)
             // default context means it uses the whole model instead of a part of it
-            //this.getView().setModel(this.oMessageModel, "message");
-            //oMessageModelBinding.attachChange(this.onMessageBindingChange, this); //add listener
+            this.getView().setModel(this.oMessageModel, "message");
+            oMessageModelBinding.attachChange(this.onMessageBindingChange, this); //add listener
             this._bTechnicalErrors = false;
+
+            this.oDataModel = this.getOwnerComponent().getModel();
         },
         //event handler of Add User button
         onCreate(){
@@ -91,7 +94,6 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
         //retrieve the context of the selected item and pass it to _setDetailArea
         onSelectionChange(oEvent) {
             this._setDetailArea(oEvent.getParameter("listItem").getBindingContext());
-            
         },
 
         onSave() {
@@ -107,8 +109,8 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                 MessageBox.error(oError.message); //displays an error dialog with the error.message from the promise
             };
 
-            //this._setBusy(true); //locks the ui until the submitBatch is resolved
-            this.getView().getModel().submitBatch("peopleGroup").then(fnSuccess, fnError); //submitBatch is an oDataModel method, which returns a promise
+            this._setBusy(true); //locks the ui until the submitBatch is resolved
+            this.oDataModel.submitBatch("peopleGroup").then(fnSuccess, fnError); //submitBatch is an oDataModel method, which returns a promise
             this._bTechnicalErrors = false; //resetting technical errors on a new save
 
         },
@@ -122,11 +124,10 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
         //currently only works on the second click, but there doesn't seem to be an error, so why?
         //maybe this is intended, the tutorial said it only resets the data, so the refresh button needs to be used to visualize the data
         onResetDataSource() {
-            const oDataModel = this.getView().getModel();
-            let oOperation = oDataModel.bindContext("/ResetDataSource(...)"); //deferred operation, the (...) marks it as deferred
+            let oOperation = this.oDataModel.bindContext("/ResetDataSource(...)"); //deferred operation, the (...) marks it as deferred
 
             oOperation.invoke().then(() => {
-                oDataModel.refresh();
+                this.oDataModel.refresh();
                 MessageToast.show(this._getText("sourceResetSuccessMessage"));
             },
             (oError) => {
@@ -179,11 +180,11 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             //all in all, the sorter cycles between unsorted, (sorted by last name, ascending) and (sorted by last name, descending) each time it's clicked
         },
 
-        /*onMessageBindingChange(oEvent) {
+        onMessageBindingChange(oEvent) {
             const aContext = oEvent.getSource().getContexts(); //only technical messages should have binding context, because of the filter
             let aMessages,
                 bMessageOpen = false;
-            console.log("onMessageBindingChange runs");
+            
             if(bMessageOpen || !aContext.length) { //do not open a dialog, if there is a dialog already present or if there are no technical messages
                 return;
             }
@@ -192,8 +193,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             aMessages = aContext.map(oContext => { //map all messages in an array
                 return oContext.getObject();
             });
-            this.oMessageModel.setProperty("/", []);
-            this.getView().setModel(this.oMessageModel, "message");
+            sap.ui.getCore().getMessageManager().removeMessages(aMessages);
 
             this._setUIChanges(true); //pending changes are true, still have the option to save or discard
             this._bTechnicalErrors = true; //indicates that technical errors are present
@@ -203,12 +203,8 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                     bMessageOpen = false; //message closes and allows new messages
                 }
             });
-            
-            //clear messages from the model
-            this.oMessageModel.setProperty("/", []);
-            this.getView().setModel(this.oMessageModel, "message");
             bMessageOpen = true;
-        },*/
+        },
 
         //Get messages from the i18n model
         _getText(sTextId, aArgs) {
@@ -220,7 +216,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                 //if there is a technical error, we set this to true
                 bHasUIChanges = true;
             } else if(bHasUIChanges === undefined){
-                bHasUIChanges = this.getView().getModel().hasPendingChanges(); //this is an oData boolean check
+                bHasUIChanges = this.oDataModel.hasPendingChanges(); //this is an oData boolean check
             }
             this.oModel.setProperty("/hasUIChanges", bHasUIChanges); 
         },

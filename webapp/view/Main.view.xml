@@ -30,12 +30,10 @@
 								parameters: {
 									$count: true,
 									$$updateGroupId: 'peopleGroup'
-								} 
+								}
 							}"
 							mode="SingleSelectLeft"
 							selectionChange="onSelectionChange">
-							
-							<!--What does $count do? The number of list items was already shown before we added count.-->
 							<headerToolbar>
 								<OverflowToolbar id="overflowToolbar">
 									<content>
@@ -91,6 +89,12 @@
 								<Column id="ageColumn">
 									<Text id="ageLabel" text="{i18n>ageLabelText}"/>
 								</Column>
+								<Column id="genderColumn">
+									<Text id="genderLabel" text="{i18n>genderLabelText}"/>
+								</Column>
+								<Column id="featureColumn">
+									<Text id="featureLabel" text="{i18n>featureLabelText}"/>
+								</Column>
 							</columns>
 							<items>
 								<ColumnListItem id="columnListItem">
@@ -119,6 +123,28 @@
 											value="{Age}" 
 											valueLiveUpdate="true" 
 											liveChange="onInputChange"/>
+									</cells>
+									<cells>
+										<Input 
+											id="genderInput" 
+											value="{
+												path: 'Gender',
+												targetType: 'any'
+											}" 
+											valueLiveUpdate="true" 
+											liveChange="onInputChange"
+											/>
+									</cells>
+									<cells>
+										<Input 
+											id="featureInput" 
+											value="{
+												path: 'FavoriteFeature',
+												targetType: 'any'
+											}" 
+											valueLiveUpdate="true" 
+											liveChange="onInputChange"
+											/>
 									</cells>
 								</ColumnListItem>
 							</items>
@@ -304,7 +330,7 @@
 					id="saveButton"
 					type="Emphasized"
 					text="{i18n>saveButtonText}"
-					enabled="{= ${appView>/usernameEmpty} === false}"
+					enabled="{= ${message>/}.length === 0 &amp;&amp; ${appView>/usernameEmpty} === false}"
 					press="onSave" />
 				<Button 
 					id="doneButton" 
