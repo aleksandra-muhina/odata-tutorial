@@ -36,7 +36,10 @@ sap.ui.define([
                     busy: false,
                     hasUIChanges : false,
 					usernameEmpty : false,
-                    order: 0
+                    order: 0,
+
+                    newEntries: false,
+                    deletedEntries: false
                 };
                 this.setModel(new JSONModel(oJSONData), "appView");
 

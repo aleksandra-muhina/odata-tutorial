@@ -32,8 +32,10 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
 
         },
         loadData() {
-            this.oDataModel.bindList("/People").requestContexts() //bind the list and fetch the items (contexts)
-                .then(
+            this.oDataModel.bindList("/People", { //establishes a connection between the model and /People in order to work with this data specifically
+                "$count": true, //same parameters as the binding in the view before
+                "$$updateGroupId": "peopleGroup" //needed for the submitbatch later
+            }).requestContexts().then(
                     (aContexts) => {
                         let aData = aContexts.map(oContext => {
                             return oContext.getObject();
@@ -55,10 +57,10 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             let aData = this.oData.getData();
 
             const oNewEntry = {
-                UserName : "",
-                FirstName : "",
-                LastName : "",
-                Age : "18"
+                "UserName" : "",
+                "FirstName" : "",
+                "LastName" : "",
+                "Age" : "18"
             };
 
             aData.unshift(oNewEntry);
@@ -88,6 +90,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
 
             this._setUIChanges(true); //sets hasUIChanges to true, because there are pending changes
             this.oModel.setProperty("/usernameEmpty", true);
+            this.oModel.setProperty("/newEntries", true);
         },
 
         onDelete(){
@@ -98,9 +101,16 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             oSelected = oPeopleList.getSelectedItem();
             //check if an item is selected
             if(oSelected) {
-                oContext = oSelected.getBindingContext(); //if an item is selected, get the context...
-                sUserName = oContext.getProperty("UserName");
-                oContext.delete().then(() => { //...and delete it (oData delete method)
+                oContext = oSelected.getBindingContext("jsonData"); //if an item is selected, get the context...
+                sUserName = oContext.getProperty("UserName"); //get the username
+                let aData = this.oData.getProperty("/"); //get the data as an array
+                const nIndex = aData.findIndex(person => { //find the index of the person with matching username
+                    return person.UserName === sUserName;
+                });
+
+                aData.splice(nIndex, 1); //use the index to remove one entry
+                this.oData.setProperty("/", aData); //update the model
+                /*oContext.delete().then(() => { //...and delete it (oData delete method)
                     MessageToast.show(this._getText("deletionSuccessMessage", sUserName)); //promise resolve
                     //user is deleted upon clicking Save
                 }, 
@@ -114,9 +124,10 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
                         return; //this results in the user being brought back to the table, upon clicking Cancel
                     }
                     MessageBox.error(oError.message + ": " + sUserName);
-                });
+                });*/
                 this._setDetailArea();
                 this._setUIChanges(true); //pending change, save btn is active
+                this.oModel.setProperty("/deletedEntries", true);
             }
         },
         //checks input in all fields, extra check for UserName to make sure it's not empty
@@ -136,7 +147,7 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
         },
 
         onSave() {
-            const fnSuccess = () => {
+            /*const fnSuccess = () => {
                 this._setBusy(false); //release the ui
                 MessageToast.show(this._getText("changesSentMessage"));
                 this._setUIChanges(false); //no more pending changes
@@ -149,13 +160,93 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
             };
 
             this._setBusy(true); //locks the ui until the submitBatch is resolved
-            this.oDataModel.submitBatch("peopleGroup").then(fnSuccess, fnError); //submitBatch is an oDataModel method, which returns a promise
-            this._bTechnicalErrors = false; //resetting technical errors on a new save
+            this.oDataModel.submitBatch("peopleGroup").then(fnSuccess, fnError); //submitBatch is an oDataModel method, which returns a promise*/
+            this._setBusy(true); //locks the ui until the submitBatch is resolved
 
+            this.oDataModel.bindList("/People", { 
+                "$count": true, 
+                "$$updateGroupId": "peopleGroup" 
+            }).requestContexts().then((aContexts) => {
+                let aOriginal = aContexts.map(oContext => oContext.getObject());
+                console.log("aOriginal: " + aOriginal);
+                this._performComparison(aOriginal);
+            }).catch((oError) => {
+                console.log("Error during updateData: " + oError.message);
+            });
+
+            const fnSuccess = () => {
+                console.log("this is successful submitbatch");
+                this._setBusy(false); //release the ui
+                MessageToast.show(this._getText("changesSentMessage"));
+                this._setUIChanges(false); //no more pending changes
+            };
+
+            const fnError = oError => {
+                console.log("this is failed submitbatch")
+                this._setBusy(false);
+                this._setUIChanges(false);
+                MessageBox.error(oError.message); //displays an error dialog with the error.message from the promise
+            };
+            this.oDataModel.submitBatch("peopleGroup").then(fnSuccess, fnError);
+            
+            this._bTechnicalErrors = false; //resetting technical errors on a new save
+        },
+
+        _performComparison(aOriginal) {
+            
+            const aData = this.oData.getProperty("/");
+            let newEntryFlag = this.oModel.getProperty("/newEntries");
+            let deletedEntryFlag = this.oModel.getProperty("/deletedEntries");
+            let aNewEntries,
+                aDeletedEntries;
+            if (newEntryFlag === true) { //filter new entries
+                aNewEntries = aData.filter(person => !aOriginal.some(originalPerson => 
+                    originalPerson.UserName === person.UserName));
+            }
+
+            if (deletedEntryFlag === true) { //filter deleted entries
+                aDeletedEntries = aOriginal.filter(originalPerson => !aData.some(person => 
+                    person.UserName === originalPerson.UserName));
+            }
+            this._update(aNewEntries, aDeletedEntries);
+        },
+
+        _update(aNewEntries, aDeletedEntries) { //use the oData methods to update the oData
+            const oBinding = this.oDataModel.bindList("/People"); 
+
+            if(aNewEntries && aNewEntries.length > 0) {
+                aNewEntries.forEach(person => {oBinding.create(person)});
+            }
+
+            if(aDeletedEntries && aDeletedEntries.length > 0) {
+                aDeletedEntries.forEach(person => {
+                    const sUserName = person.UserName;
+                    const sPath = `/People('${sUserName}')`;
+                    const oContext = this.oDataModel.bindContext(sPath).getBoundContext();
+
+                    oContext.requestObject().then(() => {
+                        oContext.delete().then(() => {
+                            console.log("successful delete");
+                        },
+                        (oError) => {
+                            console.log("unsuccessful delete: " + oError.message);
+                        });
+                    });
+                    /*oContext.delete().then(() => {
+                        console.log("delete person goes through");
+                        MessageToast.show(this._getText("deletionSuccessMessage", sUserName));
+                    },
+                    (oError) => {
+                        console.log("delete person fails");
+                        MessageToast.show(oError.message);
+                    });*/
+                });
+            }
         },
         //discard pending changes
         onResetChanges() {
-            this.byId("peopleList").getBinding("items").resetChanges();
+            this.loadData();
+            //this.byId("peopleList").getBinding("items").resetChanges();
             this._bTechnicalErrors = false;
             this._setUIChanges(); //check for pending changes, enable the header, hide the footer
         },

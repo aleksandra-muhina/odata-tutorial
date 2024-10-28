@@ -83,12 +83,12 @@
 								<Column id="ageColumn">
 									<Text id="ageLabel" text="{i18n>ageLabelText}"/>
 								</Column>
-								<Column id="genderColumn">
+								<!--<Column id="genderColumn">
 									<Text id="genderLabel" text="{i18n>genderLabelText}"/>
 								</Column>
 								<Column id="featureColumn">
 									<Text id="featureLabel" text="{i18n>featureLabelText}"/>
-								</Column>
+								</Column>-->
 							</columns>
 							<items>
 								<ColumnListItem id="columnListItem">
@@ -118,7 +118,7 @@
 											valueLiveUpdate="true" 
 											liveChange="onInputChange"/>
 									</cells>
-									<cells>
+									<!--<cells>
 										<Input 
 											id="genderInput" 
 											value="{
@@ -139,7 +139,7 @@
 											valueLiveUpdate="true" 
 											liveChange="onInputChange"
 											/>
-									</cells>
+									</cells>-->
 								</ColumnListItem>
 							</items>
 						</Table>
