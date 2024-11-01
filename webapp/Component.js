@@ -22,16 +22,13 @@ sap.ui.define([
              * @public
              * @override
              */
-            init: function () {
-                // call the base component's init function
-                UIComponent.prototype.init.apply(this, arguments);
 
-                // enable routing
+            init() {
+                UIComponent.prototype.init.apply(this, arguments);
                 this.getRouter().initialize();
 
-                // set the device model
                 this.setModel(models.createDeviceModel(), "device");
-                // set the json model
+
                 let oJSONData = {
                     busy: false,
                     hasUIChanges : false,
@@ -42,10 +39,8 @@ sap.ui.define([
 
                 this.setModel(new ODataModel({
                     serviceUrl: "odata/TripPinRESTierService/(S(id))/",
-                    odataVersion: "4.0",
-                    // autoExpandSelect: true, //adds Expand and Select to requests, allows to only fetch necessary data, and also messes with the proxy for some reason
-                    earlyRequests: true, //fetches data as early as possible, reducing load time 
-                    operationMode: "Server", // conducts filtering and sorting on the server side 
+                    earlyRequests: true,
+                    operationMode: "Server",
                     groupId: "$auto",
                     updateGroupId: "peopleGroup"
                 }));

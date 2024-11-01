@@ -6,7 +6,7 @@ sap.ui.define(
       "use strict";
   
       return BaseController.extend("tutorial.tutorial.controller.App", {
-        onInit: function() {
+        onInit() {
           this.oModel = this.getOwnerComponent().getModel("appView");
         }
       });

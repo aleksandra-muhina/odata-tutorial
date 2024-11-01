@@ -96,7 +96,6 @@
 										<Input 
 											id="userNameInput" 
 											value="{jsonData>UserName}"
-											valueLiveUpdate="true"
 											liveChange="onInputChange"/>
 									</cells>
 									<cells>
@@ -114,8 +113,7 @@
 									<cells>
 										<Input 
 											id="ageInput" 
-											value="{jsonData>Age}" 
-											valueLiveUpdate="true" 
+											value="{jsonData>Age}"
 											liveChange="onInputChange"/>
 									</cells>
 									<cells>
