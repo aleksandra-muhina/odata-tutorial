@@ -83,12 +83,12 @@
 								<Column id="ageColumn">
 									<Text id="ageLabel" text="{i18n>ageLabelText}"/>
 								</Column>
-								<!--<Column id="genderColumn">
+								<Column id="genderColumn">
 									<Text id="genderLabel" text="{i18n>genderLabelText}"/>
 								</Column>
 								<Column id="featureColumn">
 									<Text id="featureLabel" text="{i18n>featureLabelText}"/>
-								</Column>-->
+								</Column>
 							</columns>
 							<items>
 								<ColumnListItem id="columnListItem">
@@ -118,28 +118,20 @@
 											valueLiveUpdate="true" 
 											liveChange="onInputChange"/>
 									</cells>
-									<!--<cells>
+									<cells>
 										<Input 
 											id="genderInput" 
-											value="{
-												path: 'jsonData>Gender',
-												targetType: 'any'
-											}" 
-											valueLiveUpdate="true" 
-											liveChange="onInputChange"
+											value="{jsonData>Gender}" 
+											enabled="false"
 											/>
 									</cells>
 									<cells>
 										<Input 
 											id="featureInput" 
-											value="{
-												path: 'jsonData>FavoriteFeature',
-												targetType: 'any'
-											}" 
-											valueLiveUpdate="true" 
-											liveChange="onInputChange"
+											value="{jsonData>FavoriteFeature}" 
+											enabled="false"
 											/>
-									</cells>-->
+									</cells>
 								</ColumnListItem>
 							</items>
 						</Table>
@@ -151,18 +143,18 @@
 							<semantic:titleHeading>
 								<Title
 									id="detailsTitle"
-									text="{FirstName} {LastName}"
+									text="{jsonData>FirstName} {jsonData>LastName}"
 									level="H2"/>
 							</semantic:titleHeading>
 							<semantic:headerContent>
 								<FlexBox id="detailFlexBox">
 									<VBox id="vboxUserName">
 										<ObjectAttribute id="detailsUserNameLabel" text="{i18n>userNameLabelText}"/>
-										<ObjectAttribute id="detailsUserName" text="{UserName}"/>
+										<ObjectAttribute id="detailsUserName" text="{jsonData>UserName}"/>
 									</VBox>
 									<VBox id="vboxAge" class="sapUiMediumMarginBegin">
 										<ObjectAttribute id="detailsAgeLabel" text="{i18n>ageLabelText}"/>
-										<ObjectNumber id="detailsAge" number="{Age}" unit="Years"/>
+										<ObjectNumber id="detailsAge" number="{jsonData>Age}" unit="Years"/>
 									</VBox>
 								</FlexBox>
 							</semantic:headerContent>
@@ -195,65 +187,22 @@
 													<f:formElements>
 														<f:FormElement id="detailsAddressLabel" label="{i18n>addressLabelText}">
 															<f:fields>
-																<Text id="detailsAddress" text="{HomeAddress/Address}" />
+																<Text id="detailsAddress" text="{jsonData>AddressInfo/0/Address}" />
 															</f:fields>
 														</f:FormElement>
 														<f:FormElement id="detailsCityLabel" label="{i18n>cityLabelText}">
 															<f:fields>
-																<Text id="detailsCity" text="{HomeAddress/City/Name}" />
+																<Text id="detailsCity" text="{jsonData>AddressInfo/0/City/Name}" />
 															</f:fields>
 														</f:FormElement>
 														<f:FormElement id="detailsRegionLabel" label="{i18n>regionLabelText}">
 															<f:fields>
-																<Text id="detailsRegion" text="{HomeAddress/City/Region}" />
+																<Text id="detailsRegion" text="{jsonData>AddressInfo/0/City/Region}" />
 															</f:fields>
 														</f:FormElement>
 														<f:FormElement id="detailsCountryLabel" label="{i18n>countryLabelText}">
 															<f:fields>
-																<Text id="detailsCountry" text="{HomeAddress/City/CountryRegion}" />
-															</f:fields>
-														</f:FormElement>
-													</f:formElements>
-												</f:FormContainer>
-											</f:formContainers>
-										</f:Form>
-										<f:Form	id="detailsBestFriendForm" editable="false" class="sapUiTinyMargin">
-											<f:title>
-												<core:Title id="detailsFormBestFriendTitle" text="{i18n>bestFriendTitleText}" />
-											</f:title>
-											<f:layout>
-												<f:ResponsiveGridLayout
-													id="responsiveGridLayoutBF"
-													labelSpanXL="3"
-													labelSpanL="3"
-													labelSpanM="3"
-													labelSpanS="12"
-													adjustLabelSpan="false"
-													emptySpanXL="4"
-													emptySpanL="4"
-													emptySpanM="4"
-													emptySpanS="0"
-													columnsXL="1"
-													columnsL="1"
-													columnsM="1"
-													singleContainerFullSize="false" />
-											</f:layout>
-											<f:formContainers>
-												<f:FormContainer id="formContainerBestFriend">
-													<f:formElements>
-														<f:FormElement id="bestFriendNameLabel" label="{i18n>nameLabelText}">
-															<f:fields>
-																<Text id="bestFriendName" text="{BestFriend/FirstName} {BestFriend/LastName}" />
-															</f:fields>
-														</f:FormElement>
-														<f:FormElement id="bestFriendAgeLabel" label="{i18n>ageLabelText}">
-															<f:fields>
-																<Text id="bestFriendAge" text="{BestFriend/Age}" />
-															</f:fields>
-														</f:FormElement>
-														<f:FormElement id="bestFriendUserNameLabel" label="{i18n>userNameLabelText}">
-															<f:fields>
-																<Text id="bestFriendUserName" text="{BestFriend/UserName}" />
+																<Text id="detailsCountry" text="{jsonData>AddressInfo/0/City/CountryRegion}" />
 															</f:fields>
 														</f:FormElement>
 													</f:formElements>
@@ -261,55 +210,6 @@
 											</f:formContainers>
 										</f:Form>
 									</FlexBox>
-									<Table
-										id="friendsTable"
-										width="auto"
-										items="{path: 'Friends',
-												parameters: {
-													$$ownRequest: true
-												}}"
-										noDataText="{i18n>noData}"
-										class="sapUiSmallMarginBottom">
-										<headerToolbar>
-											<Toolbar id="friendsTableToolbar">
-												<Title
-													id="friendsTableTitle"
-													text="{i18n>friendsTitle}"
-													titleStyle="H4"
-													level="H4"/>
-											</Toolbar>
-										</headerToolbar>
-										<columns>
-											<Column id="friendsTableUsernameColumn">
-												<Text id="friendsTableUsernameTitle" text="{i18n>userNameLabelText}"/>
-											</Column>
-											<Column id="friendsTableFirstNameColumn">
-												<Text id="friendsTableFirstNameeTitle" text="{i18n>firstNameLabelText}"/>
-											</Column>
-											<Column id="friendsTableLastNameColumn">
-												<Text id="friendsTableLastNameTitle" text="{i18n>lastNameLabelText}"/>
-											</Column>
-											<Column id="friendsTableAgeColumn">
-												<Text id="friendsTableAgeTitle" text="{i18n>ageLabelText}"/>
-											</Column>
-										</columns>
-										<items>
-											<ColumnListItem id="friendsTableColumnListItem">
-												<cells>
-													<Text id="friendsTableUserName" text="{UserName}"/>
-												</cells>
-												<cells>
-													<Text id="friendsTableFirstName" text="{FirstName}"/>
-												</cells>
-												<cells>
-													<Text id="friendsTableLastName" text="{LastName}"/>
-												</cells>
-												<cells>
-													<Text id="friendsTableAge" text="{Age}"/>
-												</cells>
-											</ColumnListItem>
-										</items>
-									</Table>
 								</VBox>
 							</semantic:content>
 						</semantic:SemanticPage>

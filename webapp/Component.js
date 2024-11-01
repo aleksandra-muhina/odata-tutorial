@@ -36,10 +36,7 @@ sap.ui.define([
                     busy: false,
                     hasUIChanges : false,
 					usernameEmpty : false,
-                    order: 0,
-
-                    newEntries: false,
-                    deletedEntries: false
+                    order: 0
                 };
                 this.setModel(new JSONModel(oJSONData), "appView");
 
@@ -49,7 +46,8 @@ sap.ui.define([
                     // autoExpandSelect: true, //adds Expand and Select to requests, allows to only fetch necessary data, and also messes with the proxy for some reason
                     earlyRequests: true, //fetches data as early as possible, reducing load time 
                     operationMode: "Server", // conducts filtering and sorting on the server side 
-                    groupId: "$auto"
+                    groupId: "$auto",
+                    updateGroupId: "peopleGroup"
                 }));
                  
                 this.setModel(new JSONModel(), "jsonData");

@@ -15,45 +15,45 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
     return Controller.extend("tutorial.tutorial.controller.Main", {
         onInit() {
             this.oModel = this.getOwnerComponent().getModel("appView");
+            this.oDataModel = this.getOwnerComponent().getModel(); 
+            this.oData = this.getOwnerComponent().getModel("jsonData"); 
+
             const oMessageManager = sap.ui.getCore().getMessageManager();
-            this.oMessageModel = oMessageManager.getMessageModel(); //get message manager and the model through it
+            this.oMessageModel = oMessageManager.getMessageModel(); 
             let oMessageModelBinding = this.oMessageModel.bindList("/", undefined, [], 
                 new Filter("technical", FilterOperator.EQ, true)
             );
-            //.bindList("sPath", default context, no sorters, filter for only technical messages)
-            // default context means it uses the whole model instead of a part of it
             this.getView().setModel(this.oMessageModel, "message");
-            oMessageModelBinding.attachChange(this.onMessageBindingChange, this); //add listener
+            oMessageModelBinding.attachChange(this.onMessageBindingChange, this);
+
             this._bTechnicalErrors = false;
+            this.oNewPerson;
+        },
 
-            this.oDataModel = this.getOwnerComponent().getModel();
-            this.oData = this.getOwnerComponent().getModel("jsonData");
+        onAfterRendering() {
+            this.oDataPeopleList = this.oDataModel.bindList("/People");
             this.loadData();
+        },
 
-        },
         loadData() {
-            this.oDataModel.bindList("/People", { //establishes a connection between the model and /People in order to work with this data specifically
-                "$count": true, //same parameters as the binding in the view before
-                "$$updateGroupId": "peopleGroup" //needed for the submitbatch later
-            }).requestContexts().then(
-                    (aContexts) => {
-                        let aData = aContexts.map(oContext => {
-                            return oContext.getObject();
-                             //get each person as an object in an array
-                        });
-                        this.oData.setData(aData); //put the array in the jsonData model
-                    },
-                    (oError) => {
-                        console.log(oError.message);
-                        MessageBox.error(oError.message);
-                    }
-                );
+            this.oDataPeopleList.requestContexts().then(
+                (aContexts) => {
+                    let aData = aContexts.map(oContext => {
+                        let oPerson = oContext.getObject();
+                        oPerson.context = oContext;
+                        return oPerson;
+                    });
+                    this.oData.setData(aData);
+                },
+                (oError) => {
+                    MessageBox.error(oError.message);
+                }
+            );
         },
-        //event handler of Add User button
+        
         onCreate(){
             const oList = this.byId("peopleList");
             let aItems, oNewItem;
-            //const oBinding = oList.getBinding("items");
             let aData = this.oData.getData();
 
             const oNewEntry = {
@@ -65,199 +65,126 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
 
             aData.unshift(oNewEntry);
             this.oData.setData(aData);
-            this.oData.refresh(true);
+
+            this.oNewPerson = this.oDataPeopleList.create(oNewEntry);
             
             aItems = oList.getItems();
             oNewItem = aItems[0];
-
-            /*const oContext = oBinding.create({ //oDataListBinding#create, creates a new entity in the list, returns the binding context of the new user
-                "UserName" : "",
-                "FirstName" : "",
-                "LastName" : "",
-                "Age" : "18" //this all adds initial data
-            });*/
-           /*aItems.some(oItem => {
-                if(oItem.getBindingContext() === oNewItem) { //using the returned context, we select and focus the row where the data can be entered
-                    oItem.focus();
-                    oItem.setSelected(true);
-                    return true;
-                }
-            });*/
             if (oNewItem) {
                 oNewItem.setSelected(true);
                 oNewItem.focus();
             }
 
-            this._setUIChanges(true); //sets hasUIChanges to true, because there are pending changes
+            this._setUIChanges(); 
             this.oModel.setProperty("/usernameEmpty", true);
-            this.oModel.setProperty("/newEntries", true);
         },
 
         onDelete(){
             let oContext,
                 sUserName;
-
             const oPeopleList = this.byId("peopleList"),
             oSelected = oPeopleList.getSelectedItem();
-            //check if an item is selected
+
             if(oSelected) {
-                oContext = oSelected.getBindingContext("jsonData"); //if an item is selected, get the context...
-                sUserName = oContext.getProperty("UserName"); //get the username
-                let aData = this.oData.getProperty("/"); //get the data as an array
-                const nIndex = aData.findIndex(person => { //find the index of the person with matching username
+                oContext = oSelected.getBindingContext("jsonData"); 
+                sUserName = oContext.getProperty("UserName");
+                let aData = this.oData.getProperty("/");
+                const nIndex = aData.findIndex(person => {
                     return person.UserName === sUserName;
                 });
 
-                aData.splice(nIndex, 1); //use the index to remove one entry
-                this.oData.setProperty("/", aData); //update the model
-                /*oContext.delete().then(() => { //...and delete it (oData delete method)
-                    MessageToast.show(this._getText("deletionSuccessMessage", sUserName)); //promise resolve
-                    //user is deleted upon clicking Save
-                }, 
-                (oError) => {
-                    if(oContext === oPeopleList.getSelectedItem().getBindingContext()){
-                        this._setDetailArea(oContext); //if an item is restored after getting deleted, show it again in the detail area
-                    }
-                    this._setUIChanges();
-                    if(oError.canceled) {
-                        MessageToast.show(this._getText("deletionRestoredMessage", sUserName)); //promise reject
-                        return; //this results in the user being brought back to the table, upon clicking Cancel
-                    }
-                    MessageBox.error(oError.message + ": " + sUserName);
-                });*/
-                this._setDetailArea();
-                this._setUIChanges(true); //pending change, save btn is active
-                this.oModel.setProperty("/deletedEntries", true);
+                aData.splice(nIndex, 1);
+                this.oData.setProperty("/", aData);
+
+                this.oDataPeopleList.requestContexts().then(
+                    (aContexts) => {
+                        const oPerson = aContexts.find(context => context.getProperty("UserName") === sUserName);
+                        oPerson.delete().then(() => { 
+                            MessageToast.show(this._getText("deletionSuccessMessage", sUserName));
+                        }, 
+                        (oError) => {
+                            if(oContext === oPeopleList.getSelectedItem().getBindingContext("jsonData")){
+                                this._setDetailArea(oContext);
+                            }
+                            this._setUIChanges();
+                            if(oError.canceled) {
+                                MessageToast.show(this._getText("deletionRestoredMessage", sUserName));
+                                return;
+                            }
+                            MessageBox.error(oError.message + ": " + sUserName);
+                        });
+                    },
+                    (oError) => {
+                        MessageBox.error(oError.message);
+                    });
+
+                this._setDetailArea(oContext);
+                this._setUIChanges(true);
+                
             }
         },
-        //checks input in all fields, extra check for UserName to make sure it's not empty
+
+        /* Input Change updates data in the local "jsonData" model and in the oData service */
+        
         onInputChange(oEvent) {
+            const oDataContext = oEvent.getSource().getParent().getBindingContext("jsonData").getObject().context,
+            sNewValue = oEvent.getParameter("value"),
+            oContext = oEvent.getSource().getBindingContext("jsonData"),
+            sPath = oEvent.getSource().getBinding("value").getPath();
+
+            oContext.setProperty(sPath, sNewValue);
+            
+            if(oDataContext) {
+                const oBoundContext = this.oDataModel.bindContext("", oDataContext).getBoundContext();
+                oBoundContext.setProperty(`${sPath}`, `${sNewValue}`);
+            } else if (this.oNewPerson){
+                this.oNewPerson.setProperty(`${sPath}`, `${sNewValue}`);
+            } else {
+                MessageBox.error("Context could not be retrieved: " + oError.message);
+            }
+
             if(oEvent.getParameter("escPressed")) {
                 this._setUIChanges();
             } else {
                 this._setUIChanges(true);
-                if(oEvent.getSource().getParent().getBindingContext("jsonData").getObject().UserName) { //bound getBindingContext("jsonData") to the model, check the object's username
-                    this.oModel.setProperty("/usernameEmpty", false);
+                if(oContext.getProperty("UserName") === "") {
+                    this.oModel.setProperty("/usernameEmpty", true);
+                } else {
+                    this.oModel.setProperty("/usernameEmpty", false)
                 }
             }
         },
-        //retrieve the context of the selected item and pass it to _setDetailArea
-        onSelectionChange(oEvent) {
-            this._setDetailArea(oEvent.getParameter("listItem").getBindingContext());
-        },
+
+        /* onSave sends all changes to the oData service in a batch request */
 
         onSave() {
-            /*const fnSuccess = () => {
-                this._setBusy(false); //release the ui
-                MessageToast.show(this._getText("changesSentMessage"));
-                this._setUIChanges(false); //no more pending changes
-            };
-
-            const fnError = oError => {
-                this._setBusy(false);
-                this._setUIChanges(false);
-                MessageBox.error(oError.message); //displays an error dialog with the error.message from the promise
-            };
-
-            this._setBusy(true); //locks the ui until the submitBatch is resolved
-            this.oDataModel.submitBatch("peopleGroup").then(fnSuccess, fnError); //submitBatch is an oDataModel method, which returns a promise*/
-            this._setBusy(true); //locks the ui until the submitBatch is resolved
-
-            this.oDataModel.bindList("/People", { 
-                "$count": true, 
-                "$$updateGroupId": "peopleGroup" 
-            }).requestContexts().then((aContexts) => {
-                let aOriginal = aContexts.map(oContext => oContext.getObject());
-                console.log("aOriginal: " + aOriginal);
-                this._performComparison(aOriginal);
-            }).catch((oError) => {
-                console.log("Error during updateData: " + oError.message);
-            });
-
             const fnSuccess = () => {
-                console.log("this is successful submitbatch");
-                this._setBusy(false); //release the ui
+                this._setBusy(false);
                 MessageToast.show(this._getText("changesSentMessage"));
-                this._setUIChanges(false); //no more pending changes
+                this._setUIChanges(false);
             };
 
             const fnError = oError => {
-                console.log("this is failed submitbatch")
                 this._setBusy(false);
                 this._setUIChanges(false);
-                MessageBox.error(oError.message); //displays an error dialog with the error.message from the promise
+                MessageBox.error(oError.message);
             };
+
+            this._setBusy(true);
             this.oDataModel.submitBatch("peopleGroup").then(fnSuccess, fnError);
-            
-            this._bTechnicalErrors = false; //resetting technical errors on a new save
         },
 
-        _performComparison(aOriginal) {
-            
-            const aData = this.oData.getProperty("/");
-            let newEntryFlag = this.oModel.getProperty("/newEntries");
-            let deletedEntryFlag = this.oModel.getProperty("/deletedEntries");
-            let aNewEntries,
-                aDeletedEntries;
-            if (newEntryFlag === true) { //filter new entries
-                aNewEntries = aData.filter(person => !aOriginal.some(originalPerson => 
-                    originalPerson.UserName === person.UserName));
-            }
-
-            if (deletedEntryFlag === true) { //filter deleted entries
-                aDeletedEntries = aOriginal.filter(originalPerson => !aData.some(person => 
-                    person.UserName === originalPerson.UserName));
-            }
-            this._update(aNewEntries, aDeletedEntries);
-        },
-
-        _update(aNewEntries, aDeletedEntries) { //use the oData methods to update the oData
-            const oBinding = this.oDataModel.bindList("/People"); 
-
-            if(aNewEntries && aNewEntries.length > 0) {
-                aNewEntries.forEach(person => {oBinding.create(person)});
-            }
-
-            if(aDeletedEntries && aDeletedEntries.length > 0) {
-                aDeletedEntries.forEach(person => {
-                    const sUserName = person.UserName;
-                    const sPath = `/People('${sUserName}')`;
-                    const oContext = this.oDataModel.bindContext(sPath).getBoundContext();
-
-                    oContext.requestObject().then(() => {
-                        oContext.delete().then(() => {
-                            console.log("successful delete");
-                        },
-                        (oError) => {
-                            console.log("unsuccessful delete: " + oError.message);
-                        });
-                    });
-                    /*oContext.delete().then(() => {
-                        console.log("delete person goes through");
-                        MessageToast.show(this._getText("deletionSuccessMessage", sUserName));
-                    },
-                    (oError) => {
-                        console.log("delete person fails");
-                        MessageToast.show(oError.message);
-                    });*/
-                });
-            }
-        },
-        //discard pending changes
         onResetChanges() {
+            this.oDataPeopleList.resetChanges();
             this.loadData();
-            //this.byId("peopleList").getBinding("items").resetChanges();
             this._bTechnicalErrors = false;
-            this._setUIChanges(); //check for pending changes, enable the header, hide the footer
+            this._setUIChanges();
         },
-        //revert all changes even if they were saved 
-        //currently only works on the second click, but there doesn't seem to be an error, so why?
-        //maybe this is intended, the tutorial said it only resets the data, so the refresh button needs to be used to visualize the data
+        
         onResetDataSource() {
-            let oOperation = this.oDataModel.bindContext("/ResetDataSource(...)"); //deferred operation, the (...) marks it as deferred
+            const oOperation = this.oDataModel.bindContext("/ResetDataSource(...)");
 
             oOperation.invoke().then(() => {
-                this.oDataModel.refresh();
                 MessageToast.show(this._getText("sourceResetSuccessMessage"));
             },
             (oError) => {
@@ -266,121 +193,109 @@ function (Controller, MessageToast, MessageBox, Sorter, Filter, FilterOperator, 
         },
 
         onRefresh() {
-            const oBinding = this.byId("peopleList").getBinding("items");
-
-            //.hasPendingChanges() is a method of sap.ui.model.odata.v4.ODataPropertyBinding, 
-            //and returns boolean true or false.
-            if(oBinding.hasPendingChanges()) {
+            if(this.oDataPeopleList.hasPendingChanges()) {
                 MessageBox.error(this._getText("refreshNotPossibleMessage"));
                 return;
+            } else {
+                this.oDataPeopleList.refresh();
+                MessageToast.show(this._getText("refreshSuccessMessage"));
             }
-            oBinding.refresh();
-            MessageToast.show(this._getText("refreshSuccessMessage"));
         },  
 
-        //The search is case sensitive and searches only in the currently loaded names
+        /* onSelectionChange opens the details panel */
+
+        onSelectionChange(oEvent) {
+            this._setDetailArea(oEvent.getParameter("listItem").getBindingContext("jsonData"));
+        },
+
+        /* The search is case sensitive and currently unly searches by LastName */
+
         onSearch() {
             const oView = this.getView(),
             sValue = oView.byId("searchField").getValue(),
             oFilter = new Filter("LastName", FilterOperator.Contains, sValue);
-
-            //We apply the Filter (oFilter) via the .filter method, and then the binding automatically
-            //retrieves filtered data from the OData V4 service and updates the table.
             oView.byId("peopleList").getBinding("items").filter(oFilter, FilterType.Application);
         },
 
-        //Unlike the search, this sorts all names, even ones not currently displayed. WHY?
+        /* The sort button changes sorting options when clicked, and sorts by LastName */
+
         onSort() {
             const oView = this.getView(),
             aStates = [undefined, "asc", "desc"],
-            aStateTextIds = ["sortNone", "sortAscending", "sortDescending"]; //this leads to i18n messages
+            aStateTextIds = ["sortNone", "sortAscending", "sortDescending"];
             let iOrder = this.oModel.getProperty("/order");
             let sMessage;
 
-            iOrder = (iOrder + 1) % aStates.length; //cycles through 0, 1 and 2 on every click
-            const sOrder = aStates[iOrder]; //cycles through the states on every click
+            iOrder = (iOrder + 1) % aStates.length;
+            const sOrder = aStates[iOrder];
 
-            this.oModel.setProperty("/order", iOrder); //preserves the current number between clicks
+            this.oModel.setProperty("/order", iOrder);
             oView.byId("peopleList").getBinding("items").sort(sOrder && new Sorter("LastName", sOrder === "desc"));
-            //If sOrder is truthy, new Sorter is created, which sorts by LastName and determines the order (if sOrder === "desc" returns true or false)
 
-            sMessage = this._getText("sortMessage", [this._getText(aStateTextIds[iOrder])]); //this ties the i18n message together
+            sMessage = this._getText("sortMessage", [this._getText(aStateTextIds[iOrder])]);
             MessageToast.show(sMessage);
-
-            //all in all, the sorter cycles between unsorted, (sorted by last name, ascending) and (sorted by last name, descending) each time it's clicked
         },
 
+        /* Message Filter */
+
         onMessageBindingChange(oEvent) {
-            const aContext = oEvent.getSource().getContexts(); //only technical messages should have binding context, because of the filter
+            const aContext = oEvent.getSource().getContexts();
             let aMessages,
                 bMessageOpen = false;
             
-            if(bMessageOpen || !aContext.length) { //do not open a dialog, if there is a dialog already present or if there are no technical messages
+            if(bMessageOpen || !aContext.length) {
                 return;
             }
-
-            //extract the technical messages
-            aMessages = aContext.map(oContext => { //map all messages in an array
+            aMessages = aContext.map(oContext => {
                 return oContext.getObject();
             });
             sap.ui.getCore().getMessageManager().removeMessages(aMessages);
 
-            this._setUIChanges(true); //pending changes are true, still have the option to save or discard
-            this._bTechnicalErrors = true; //indicates that technical errors are present
-            MessageBox.error(aMessages[0].message, { //get the first technical error and display it as a message
+            this._setUIChanges(true);
+            this._bTechnicalErrors = true;
+            MessageBox.error(aMessages[0].message, {
                 id: "serviceErrorMessageBox",
                 onClose: () => {
-                    bMessageOpen = false; //message closes and allows new messages
+                    bMessageOpen = false;
                 }
             });
             bMessageOpen = true;
         },
 
-        //Get messages from the i18n model
         _getText(sTextId, aArgs) {
             return this.getOwnerComponent().getModel("i18n").getResourceBundle().getText(sTextId, aArgs);
         },
-        //check of there are unsaved/unapplied changes
+
+        /* _setUIChanges determines the visibility of the footer toolbar with the Save and Cancel options */
+
         _setUIChanges(bHasUIChanges) {
             if(this._bTechnicalErrors) {
-                //if there is a technical error, we set this to true
                 bHasUIChanges = true;
             } else if(bHasUIChanges === undefined){
-                bHasUIChanges = this.oDataModel.hasPendingChanges(); //this is an oData boolean check
+                bHasUIChanges = this.oDataModel.hasPendingChanges();
             }
             this.oModel.setProperty("/hasUIChanges", bHasUIChanges); 
         },
 
-        _setBusy(bIsBusy) { //sets the App View to busy
+        _setBusy(bIsBusy) {
             this.oModel.setProperty("/busy", bIsBusy);
         },
-        //set Detail view
+
+        /* Creates the detail area */
+        
         _setDetailArea(oUserContext) {
             const oDetailArea = this.byId("detailArea"),
                 oLayout = this.byId("defaultLayout"),
                 oSearchField = this.byId("searchField");
 
-            let oOldContext;
-
             if(!oDetailArea) {
-                return; //check if there is a detail view and return if there is none
+                return;
             }
 
-            oOldContext = oDetailArea.getBindingContext(); //get the current/about-to-be-old context
-            if(oOldContext) {
-                oOldContext.setKeepAlive(false); //removes old context
-            }
-            if(oUserContext) { //saves the new context and keeps it until it becomes old context
-                oUserContext.setKeepAlive(true,
-                    this._setDetailArea.bind(this) //.bind(this) makes sure that when this._setDetailArea is called from here, "this" still refers to the controller
-                ); 
-            }
-
-            oDetailArea.setBindingContext(oUserContext || null); 
-
-            oDetailArea.setVisible(!!oUserContext); //turn to boolean to set visibility
+            oDetailArea.setBindingContext(oUserContext, "jsonData"); 
+            oDetailArea.setVisible(!!oUserContext);
             oLayout.setSize(oUserContext ? "60%" : "100%");
-            oLayout.setResizable(!!oUserContext); //make the detail view resizable
+            oLayout.setResizable(!!oUserContext);
             oSearchField.setWidth(oUserContext ? "40%" : "30%");
         }
     });
